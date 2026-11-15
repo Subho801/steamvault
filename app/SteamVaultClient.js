@@ -37,7 +37,7 @@ function GameCover({ appid, name, className }) {
   );
 }
 
-export default function Home() {
+export default function SteamVaultClient() {
   const [mode, setMode] = useState('single');
   const [query, setQuery] = useState('');
   const [query2, setQuery2] = useState('');
