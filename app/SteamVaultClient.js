@@ -37,7 +37,7 @@ function GameCover({ appid, name, className }) {
   );
 }
 
-export default function SteamVaultClient() {
+export default function SteamVaultClient({ initialId }) {
   const [mode, setMode] = useState('single');
   const [query, setQuery] = useState('');
   const [query2, setQuery2] = useState('');
@@ -67,6 +67,12 @@ export default function SteamVaultClient() {
   };
 
   useEffect(() => {
+    if (initialId) {
+    setMode('single');
+    setQuery(initialId);
+    runSingleScan(initialId);
+    return;
+  }
     const params = new URLSearchParams(window.location.search);
     const idParam = params.get('id');
     const p1 = params.get('p1');
@@ -82,7 +88,7 @@ export default function SteamVaultClient() {
       setQuery(idParam);
       runSingleScan(idParam);
     }
-  }, []);
+  }, [initialId]);
 
   const runSingleScan = async (targetId) => {
     const slug = cleanQuerySlug(targetId);
@@ -97,7 +103,7 @@ export default function SteamVaultClient() {
       if (!res.ok) throw new Error(json.error || 'Failed to scan Steam profile');
       setData(json);
       setData2(null);
-      window.history.replaceState({}, '', `?id=${encodeURIComponent(slug)}`);
+      window.history.replaceState({}, '', `/u/${encodeURIComponent(slug)}`);
     } catch (err) {
       setError(err.message);
     } finally {
