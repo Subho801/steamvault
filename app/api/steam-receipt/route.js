@@ -7,6 +7,33 @@ const STEAM_API_KEY = process.env.STEAM_API_KEY;
 const CACHE_DIR = process.env.VERCEL ? '/tmp' : process.cwd();
 const PRICE_CACHE_FILE = path.join(CACHE_DIR, 'price-cache.json');
 const HLTB_CACHE_FILE = path.join(CACHE_DIR, 'hltb-cache.json');
+const KV_URL = process.env.KV_REST_API_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+
+async function redisGet(key) {
+  if (!KV_URL || !KV_TOKEN) return null;
+  try {
+    const res = await fetch(`${KV_URL}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${KV_TOKEN}` },
+      cache: 'no-store',
+    });
+    const data = await res.json();
+    return data.result ? JSON.parse(data.result) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function redisSet(key, value, ttlSeconds = 86400) {
+  if (!KV_URL || !KV_TOKEN) return;
+  try {
+    await fetch(`${KV_URL}/set/${encodeURIComponent(key)}/EX/${ttlSeconds}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${KV_TOKEN}` },
+      body: JSON.stringify(value),
+    });
+  } catch {}
+}
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const hltbService = new HowLongToBeatService();
@@ -200,6 +227,14 @@ export async function GET(request) {
   try {
     const steamId = await resolveSteamId(query.trim());
 
+    const cacheKey = `steamvault:profile:${steamId}`;
+    if (!forceRefresh) {
+      const cached = await redisGet(cacheKey);
+      if (cached) {
+        return NextResponse.json({ ...cached, cached: true });
+      }
+    }
+    
     const [profileRes, gamesRes, levelRes] = await Promise.all([
       fetch(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_API_KEY}&steamids=${steamId}`),
       fetch(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_API_KEY}&steamid=${steamId}&include_appinfo=1&include_played_free_games=1`),
@@ -414,6 +449,7 @@ export async function GET(request) {
       hallOfShame,
       library,
     });
+    await redisSet(cacheKey, finalPayload, 86400);
   } catch (error) {
     return NextResponse.json({ error: error.message || 'Failed to generate receipt' }, { status: 500 });
   }
