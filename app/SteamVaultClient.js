@@ -223,6 +223,35 @@ export default function SteamVaultClient({ initialId }) {
 
   return (
     <main className="min-h-screen py-10 px-4 flex flex-col items-center">
+    {/* SteamDB-Style Equipped Profile Background */}
+      {data?.profile?.background && (
+        <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+          {data.profile.background.type === 'video' ? (
+            <video
+              src={data.profile.background.url}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover opacity-55 scale-105"
+            />
+          ) : (
+            <img
+              src={data.profile.background.url}
+              alt=""
+              className="w-full h-full object-cover object-top opacity-55"
+            />
+          )}
+          {/* Subtle vignette so center cards stay crisp and readable */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'radial-gradient(circle at 50% 30%, rgba(13, 18, 30, 0.35) 0%, rgba(13, 18, 30, 0.88) 85%)',
+            }}
+          />
+        </div>
+      )}
       {/* Top Brand Header */}
       <div className="w-full max-w-4xl flex items-center justify-between mb-8">
         <button
