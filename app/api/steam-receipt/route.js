@@ -219,6 +219,7 @@ async function fetchWishlistStats(steamId, countryCode = 'IN') {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('id');
+  const forceRefresh = searchParams.get('refresh') === '1';
 
   if (!query) {
     return NextResponse.json({ error: 'Missing Steam ID or username' }, { status: 400 });
