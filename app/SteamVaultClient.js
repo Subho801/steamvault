@@ -303,9 +303,11 @@ export default function SteamVaultClient({ initialId }) {
           onClick={resetHome}
           className="flex items-center gap-3 text-left cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-300 via-indigo-300 to-violet-300 border border-white/50 flex items-center justify-center font-black text-slate-900 shadow-lg shadow-sky-400/20 transition-transform duration-300 group-hover:scale-105">
-            SV
-          </div>
+          <img
+            src="/logo.png"
+            alt="SteamVault Logo"
+            className="w-10 h-10 rounded-2xl object-cover border border-white/25 shadow-lg shadow-sky-400/20 transition-transform duration-300 group-hover:scale-105"
+          />
           <div>
             <span className="font-bold text-lg tracking-tight text-slate-100 group-hover:text-white transition-colors">
               SteamVault
