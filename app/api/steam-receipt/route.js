@@ -10,18 +10,15 @@ const HLTB_CACHE_FILE = path.join(CACHE_DIR, 'hltb-cache.json');
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
-async function redisGet(key) {
-  if (!KV_URL || !KV_TOKEN) return null;
+async function redisSet(key, value, ttlSeconds = 86400) {
+  if (!KV_URL || !KV_TOKEN) return;
   try {
-    const res = await fetch(`${KV_URL}/get/${encodeURIComponent(key)}`, {
+    await fetch(`${KV_URL}/set/${encodeURIComponent(key)}?EX=${ttlSeconds}`, {
+      method: 'POST',
       headers: { Authorization: `Bearer ${KV_TOKEN}` },
-      cache: 'no-store',
+      body: JSON.stringify(value),
     });
-    const data = await res.json();
-    return data.result ? JSON.parse(data.result) : null;
-  } catch {
-    return null;
-  }
+  } catch {}
 }
 
 async function redisSet(key, value, ttlSeconds = 86400) {
@@ -279,6 +276,22 @@ export async function GET(request) {
     if (!forceRefresh) {
       const cached = await redisGet(cacheKey);
       if (cached) {
+        await updateLeaderboard({
+          steamId: cached.profile.steamId,
+          name: cached.profile.name,
+          avatar: cached.profile.avatar,
+          country: cached.profile.country,
+          level: cached.profile.level,
+          totalGames: cached.stats.totalGames,
+          totalHours: cached.stats.totalHours,
+          neverPlayed: cached.stats.neverPlayed,
+          unplayedPercentage: cached.stats.unplayedPercentage,
+          totalRetailValue: cached.financials.totalRetailValue,
+          unplayedValue: cached.financials.unplayedValue,
+          currency: cached.financials.currency,
+          mostPlayedName: cached.stats.mostPlayed?.name || 'None',
+          scannedAt: Date.now(),
+        });
         return NextResponse.json({ ...cached, cached: true });
       }
     }
