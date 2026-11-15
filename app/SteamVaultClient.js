@@ -191,24 +191,73 @@ export default function SteamVaultClient({ initialId }) {
     setRouletteGame(random);
   };
 
-  const getPersona = (stats) => {
-    if (stats.unplayedPercentage >= 75)
+  const getPersona = (stats, financials) => {
+    const topGameShare =
+      stats.totalHours > 0 ? (stats.mostPlayed.hours / stats.totalHours) * 100 : 0;
+    const isInr = (financials?.currency || 'INR') === 'INR';
+    const goodCph = isInr ? 35 : 0.5;
+
+    if (stats.totalGames >= 2000)
       return {
-        label: 'Digital Hoarder',
-        style: 'from-violet-400/25 to-fuchsia-400/25 border-violet-300/35 text-violet-200',
+        label: 'Leviathan Collector',
+        desc: 'Owns 2,000+ games — a walking Steam storefront archive.',
+        style: 'from-amber-400/25 to-yellow-400/25 border-amber-300/40 text-amber-200',
       };
-    if (stats.unplayedPercentage >= 50)
+    if (stats.totalHours >= 300 && topGameShare >= 65)
       return {
-        label: 'Steam Sale Victim',
-        style: 'from-amber-400/25 to-rose-400/25 border-amber-300/35 text-amber-200',
+        label: 'One-Game Andy',
+        desc: `${Math.round(topGameShare)}% of all playtime is spent in ${stats.mostPlayed.name}.`,
+        style: 'from-cyan-400/25 to-sky-400/25 border-cyan-300/35 text-cyan-200',
       };
-    if (stats.totalHours > 3000)
+    if (stats.totalHours >= 5000)
       return {
         label: 'Certified No-Lifer',
+        desc: '5,000+ hours logged on Steam — practically lives in-game.',
         style: 'from-sky-400/25 to-indigo-400/25 border-sky-300/35 text-sky-200',
+      };
+    if (stats.unplayedPercentage >= 75 && stats.totalGames >= 100)
+      return {
+        label: 'Digital Hoarder',
+        desc: '75%+ of the library has 0 minutes played.',
+        style: 'from-violet-400/25 to-fuchsia-400/25 border-violet-300/35 text-violet-200',
+      };
+    if (stats.unplayedPercentage >= 55 && stats.totalGames >= 50)
+      return {
+        label: 'Steam Sale Victim',
+        desc: 'Over 55% untouched backlog — couldn’t resist seasonal discounts.',
+        style: 'from-amber-400/25 to-rose-400/25 border-amber-300/35 text-amber-200',
+      };
+    if (
+      financials?.costPerHour > 0 &&
+      financials.costPerHour <= goodCph &&
+      stats.totalHours >= 500
+    )
+      return {
+        label: 'Value Optimizer',
+        desc: 'Ultra-low cost per hour — extracts maximum value from every purchase.',
+        style: 'from-emerald-400/25 to-lime-400/25 border-emerald-300/35 text-emerald-200',
+      };
+    if (stats.totalHours >= 2000 && stats.unplayedPercentage < 55)
+      return {
+        label: 'Backlog Warrior',
+        desc: '2,000+ hours played while keeping the unplayed backlog under control.',
+        style: 'from-indigo-400/25 to-blue-400/25 border-indigo-300/35 text-indigo-200',
+      };
+    if (stats.totalGames >= 50 && stats.unplayedPercentage < 40)
+      return {
+        label: 'Weekend Explorer',
+        desc: 'Actively plays over 60% of the games in their library.',
+        style: 'from-teal-400/25 to-emerald-400/25 border-teal-300/35 text-teal-200',
+      };
+    if (stats.totalGames < 25 && stats.totalHours < 100)
+      return {
+        label: 'Window Shopper',
+        desc: 'Minimalist library — buys only what they immediately play.',
+        style: 'from-slate-400/25 to-zinc-400/25 border-slate-300/35 text-slate-200',
       };
     return {
       label: 'Disciplined Gamer',
+      desc: 'Healthy balance between library size, playtime, and backlog.',
       style: 'from-emerald-400/25 to-teal-400/25 border-emerald-300/35 text-emerald-200',
     };
   };
