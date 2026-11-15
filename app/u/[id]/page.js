@@ -40,10 +40,11 @@ async function getQuickOgData(rawId) {
 
     return {
       name: player.personaname,
+      avatar: player.avatarfull,
       games: games.length.toLocaleString(),
       hours: Math.round(totalMins / 60).toLocaleString(),
       unplayed: `${Math.round((unplayed / games.length) * 100)}%`,
-      value: `${games.length} Games`,
+      value: `${unplayed.toLocaleString()} Left`,
     };
   } catch {
     return null;
@@ -61,11 +62,11 @@ export async function generateMetadata({ params }) {
 
   const ogUrl = `${baseUrl}/api/og?name=${encodeURIComponent(
     stats.name
-  )}&games=${encodeURIComponent(stats.games)}&hours=${encodeURIComponent(
-    stats.hours
-  )}&value=${encodeURIComponent(stats.value)}&unplayed=${encodeURIComponent(
-    stats.unplayed
-  )}`;
+  )}&avatar=${encodeURIComponent(stats.avatar)}&games=${encodeURIComponent(
+    stats.games
+  )}&hours=${encodeURIComponent(stats.hours)}&value=${encodeURIComponent(
+    stats.value
+  )}&unplayed=${encodeURIComponent(stats.unplayed)}`;
 
   return {
     title: `${stats.name}'s SteamVault — ${stats.games} Games · ${stats.hours}h Played`,
