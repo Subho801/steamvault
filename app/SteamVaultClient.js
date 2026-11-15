@@ -90,7 +90,7 @@ export default function SteamVaultClient({ initialId }) {
     }
   }, [initialId]);
 
-  const runSingleScan = async (targetId) => {
+  const runSingleScan = async (targetId, forceRefresh = false) => {
     const slug = cleanQuerySlug(targetId);
     if (!slug) return;
     setLoading(true);
@@ -98,7 +98,9 @@ export default function SteamVaultClient({ initialId }) {
     setRouletteGame(null);
 
     try {
-      const res = await fetch(`/api/steam-receipt?id=${encodeURIComponent(slug)}`);
+      const res = await fetch(
+        `/api/steam-receipt?id=${encodeURIComponent(slug)}${forceRefresh ? '&refresh=1' : ''}`
+      );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to scan Steam profile');
       setData(json);
@@ -414,7 +416,7 @@ export default function SteamVaultClient({ initialId }) {
               </div>
 
               <button
-                onClick={() => runSingleScan(data.profile.steamId)}
+                onClick={() => runSingleScan(data.profile.steamId, true)}
                 onMouseMove={handleCardMove}
                 disabled={loading}
                 className="glossy-btn glossy-card glow-sky self-start sm:self-center px-3.5 py-2 rounded-xl text-xs font-medium text-slate-200 hover:text-white cursor-pointer"
