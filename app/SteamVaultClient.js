@@ -720,174 +720,29 @@ export default function SteamVaultClient({ initialId }) {
             </div>
           )}
 
-          {/* Interactive Game Library Explorer */}
+          {/* Link to Dedicated Library Explorer Page */}
           {data.library?.length > 0 && (
-            <div className="glossy-panel rounded-3xl p-6 sm:p-8 space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-violet-300">
-                    Library Explorer
-                  </span>
-                  <h3 className="text-lg font-bold text-slate-100">
-                    Browse Your {data.library.length.toLocaleString()} Games
-                  </h3>
-                </div>
-
-                <input
-                  type="text"
-                  placeholder="Search game title..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setVisibleCount(24);
-                  }}
-                  className="w-full sm:w-64 px-4 py-2.5 rounded-xl bg-slate-950/60 border border-white/12 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-300/60"
-                />
+            <div className="glossy-panel rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-violet-300">
+                  Full Library Explorer
+                </span>
+                <h3 className="text-base font-bold text-slate-100 mt-0.5">
+                  Browse &amp; Search All {data.library.length.toLocaleString()} Games
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Filter by unplayed, sort by price or hours, and launch titles on a dedicated page.
+                </p>
               </div>
 
-              {/* Filter Pills & Sort Dropdown */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-white/10">
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { id: 'all', label: 'All Games' },
-                    { id: 'unplayed', label: 'Never Played' },
-                    { id: 'played', label: 'Played' },
-                    { id: 'paid', label: 'Paid Only' },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => {
-                        setLibraryFilter(tab.id);
-                        setVisibleCount(24);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
-                        libraryFilter === tab.id
-                          ? 'bg-white/15 text-white border border-white/25'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                <select
-                  value={librarySort}
-                  onChange={(e) => setLibrarySort(e.target.value)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-950/70 border border-white/15 text-xs text-slate-200 focus:outline-none focus:border-sky-300/60 cursor-pointer"
-                >
-                  <option value="hours-desc">Sort: Most Played</option>
-                  <option value="price-desc">Sort: Highest Price</option>
-                  <option value="name-asc">Sort: Name (A–Z)</option>
-                </select>
-              </div>
-
-              {/* Filtered & Sorted Game Grid */}
-              {(() => {
-                const filtered = data.library
-                  .filter((g) => {
-                    if (
-                      searchTerm &&
-                      !g.name.toLowerCase().includes(searchTerm.toLowerCase())
-                    ) {
-                      return false;
-                    }
-                    if (libraryFilter === 'unplayed') return g.minutes === 0;
-                    if (libraryFilter === 'played') return g.minutes > 0;
-                    if (libraryFilter === 'paid') return g.price > 0;
-                    return true;
-                  })
-                  .sort((a, b) => {
-                    if (librarySort === 'hours-desc') return b.minutes - a.minutes;
-                    if (librarySort === 'price-desc') return b.price - a.price;
-                    return a.name.localeCompare(b.name);
-                  });
-
-                const shown = filtered.slice(0, visibleCount);
-
-                return (
-                  <>
-                    <div className="text-xs text-slate-400">
-                      Showing {shown.length} of {filtered.length.toLocaleString()} matching titles
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {shown.map((game) => (
-                        <div
-                          key={game.appid}
-                          onMouseMove={handleCardMove}
-                          className="glossy-card glow-sky rounded-2xl overflow-hidden flex flex-col justify-between"
-                        >
-                          <div>
-                            <div className="relative h-28 w-full bg-slate-900 overflow-hidden">
-                              <GameCover
-                                appid={game.appid}
-                                name={game.name}
-                                className="w-full h-full object-cover"
-                              />
-                              <span
-                                className={`absolute top-2 right-2 px-2 py-0.5 rounded-lg text-[10px] font-semibold backdrop-blur-md border ${
-                                  game.minutes === 0
-                                    ? 'bg-rose-950/80 border-rose-400/30 text-rose-200'
-                                    : 'bg-slate-950/80 border-white/20 text-sky-200'
-                                }`}
-                              >
-                                {game.minutes === 0 ? 'Unplayed' : `${game.hours}h played`}
-                              </span>
-                            </div>
-
-                            <div className="p-4">
-                              <h4
-                                className="font-semibold text-sm text-slate-100 truncate"
-                                title={game.name}
-                              >
-                                {game.name}
-                              </h4>
-                              <div className="text-xs text-slate-400 mt-1.5">
-                                {game.price > 0
-                                  ? formatCurrency(game.price, data.financials.currency)
-                                  : 'Free / Delisted'}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="px-4 pb-4 pt-1 flex items-center justify-between gap-2">
-                            <a
-                              href={`https://store.steampowered.com/app/${game.appid}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[11px] text-slate-400 hover:text-slate-200 transition-colors"
-                            >
-                              Store Page ↗
-                            </a>
-                            <a
-                              href={`steam://run/${game.appid}`}
-                              className="glossy-btn px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-semibold text-sky-200"
-                            >
-                              ▶ Launch
-                            </a>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {visibleCount < filtered.length && (
-                      <div className="pt-2 text-center">
-                        <button
-                          onClick={() => setVisibleCount((prev) => prev + 24)}
-                          className="glossy-btn glossy-card glow-violet px-6 py-2.5 rounded-xl text-xs font-semibold text-slate-200 hover:text-white cursor-pointer"
-                        >
-                          Load More ({filtered.length - visibleCount} remaining)
-                        </button>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+              <a
+                href={`/u/${encodeURIComponent(query || data.profile.steamId)}/library`}
+                className="glossy-btn px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-300 via-indigo-300 to-sky-300 border border-white/50 text-xs font-bold text-slate-950 shadow-lg shadow-indigo-500/20 shrink-0"
+              >
+                Open Library ({data.library.length.toLocaleString()}) →
+              </a>
             </div>
           )}
-        </div>
-      )}
 
       {/* 1v1 FRIEND BATTLE VIEW */}
       {data && data2 && (
