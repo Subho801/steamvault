@@ -50,7 +50,6 @@ export default function SteamVaultClient({ initialId }) {
   const [copied, setCopied] = useState(false);
 
   const [rouletteGame, setRouletteGame] = useState(null);
-  const [quickWinOnly, setQuickWinOnly] = useState(false);
 
   const cardRef = useRef(null);
 
@@ -182,10 +181,7 @@ export default function SteamVaultClient({ initialId }) {
   };
 
   const spinRoulette = () => {
-    const pool =
-      quickWinOnly && data?.quickWinGames?.length > 0
-        ? data.quickWinGames
-        : data?.unplayedGames || [];
+    const pool = data?.unplayedGames || [];
     if (!pool.length) return;
     const random = pool[Math.floor(Math.random() * pool.length)];
     setRouletteGame(random);
@@ -234,7 +230,7 @@ export default function SteamVaultClient({ initialId }) {
     )
       return {
         label: 'Value Optimizer',
-        desc: 'Ultra-low cost per hour — extracts maximum value from every purchase.',
+        desc: 'Extracts maximum playtime out of every rupee/dollar spent.',
         style: 'from-emerald-400/25 to-lime-400/25 border-emerald-300/35 text-emerald-200',
       };
     if (stats.totalHours >= 2000 && stats.unplayedPercentage < 55)
@@ -272,7 +268,7 @@ export default function SteamVaultClient({ initialId }) {
 
   return (
     <main className="min-h-screen py-10 px-4 flex flex-col items-center">
-    {/* SteamDB-Style Equipped Profile Background */}
+      {/* SteamDB-Style Equipped Profile Background */}
       {data?.profile?.background && (
         <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
           {data.profile.background.type === 'video' ? (
@@ -291,7 +287,6 @@ export default function SteamVaultClient({ initialId }) {
               className="w-full h-full object-cover object-top opacity-55"
             />
           )}
-          {/* Subtle vignette so center cards stay crisp and readable */}
           <div
             className="absolute inset-0"
             style={{
@@ -301,6 +296,7 @@ export default function SteamVaultClient({ initialId }) {
           />
         </div>
       )}
+
       {/* Top Brand Header */}
       <div className="w-full max-w-4xl flex items-center justify-between mb-8">
         <button
@@ -385,7 +381,7 @@ export default function SteamVaultClient({ initialId }) {
           </h1>
           <p className="text-sm text-slate-400 mb-6 leading-relaxed">
             {mode === 'single'
-              ? 'A calm, clear look at your library value, unplayed backlog hours, and cost-per-hour efficiency.'
+              ? 'A calm, clear look at your library value, unplayed backlog hours, and gamer persona.'
               : 'Compare two Steam profiles side-by-side to see who owns more and plays more.'}
           </p>
 
@@ -440,385 +436,402 @@ export default function SteamVaultClient({ initialId }) {
       )}
 
       {/* SINGLE PROFILE GLOSSY DASHBOARD */}
-      {data && !data2 && (
-        <div className="w-full max-w-4xl space-y-6">
-          <div ref={cardRef} className="glossy-panel rounded-3xl p-6 sm:p-8 space-y-7">
-            {/* Profile Hero Banner */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/12">
-              <div className="flex items-center gap-4">
-                <div className="relative group">
-                  <img
-                    src={data.profile.avatar}
-                    alt={data.profile.name}
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-white/25 shadow-xl transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <span className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-lg bg-slate-900/90 border border-white/25 text-[10px] font-semibold text-sky-200 backdrop-blur-md">
-                    {data.profile.country}
-                  </span>
-                </div>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-2xl font-bold text-slate-100">{data.profile.name}</h2>
-                    {data.profile.level > 0 && (
-                      <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-white/10 border border-white/20 text-slate-200">
-                        LVL {data.profile.level}
-                      </span>
-                    )}
-                    <span
-                      className={`text-[11px] px-3 py-0.5 rounded-full font-semibold border bg-gradient-to-r backdrop-blur-md ${
-                        getPersona(data.stats).style
-                      }`}
-                    >
-                      {getPersona(data.stats).label}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1.5">
-                    {data.profile.memberSince && (
-                      <>
-                        Since <span className="text-slate-200 font-medium">{data.profile.memberSince}</span> ({data.profile.accountAgeYears}y) •{' '}
-                      </>
-                    )}
-                    <span className="text-slate-200 font-medium">
-                      {data.stats.totalGames.toLocaleString()} games
-                    </span>{' '}
-                    •{' '}
-                    <span className="text-sky-200 font-medium">
-                      {data.stats.totalHours.toLocaleString()}h played
-                    </span>
-                  </p>
-                </div>
-              </div>
+      {data && !data2 && (() => {
+        const persona = getPersona(data.stats, data.financials);
+        const avgGamePrice =
+          data.stats.totalGames > 0
+            ? Math.round(data.financials.totalRetailValue / data.stats.totalGames)
+            : 0;
+        const playedGamesCount = Math.max(0, data.stats.totalGames - data.stats.neverPlayed);
+        const playedPercentage = Math.max(0, 100 - data.stats.unplayedPercentage);
+        const topGamePct =
+          data.stats.totalHours > 0
+            ? Math.round((data.stats.mostPlayed.hours / data.stats.totalHours) * 100)
+            : 0;
 
-              <button
-                onClick={() => runSingleScan(data.profile.steamId, true)}
-                onMouseMove={handleCardMove}
-                disabled={loading}
-                className="glossy-btn glossy-card glow-sky self-start sm:self-center px-3.5 py-2 rounded-xl text-xs font-medium text-slate-200 hover:text-white cursor-pointer"
-              >
-                {loading ? 'Refreshing...' : '↻ Rescan'}
-              </button>
-            </div>
-
-            {/* Wallet Damage Highlight Cards */}
-            <div>
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-3.5">
-                Wallet &amp; Value Analytics
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-sky rounded-2xl p-5"
-                >
-                  <span className="text-xs text-slate-400">Est. Library Value</span>
-                  <div className="text-2xl font-bold text-slate-100 mt-1">
-                    {formatCurrency(data.financials.totalRetailValue, data.financials.currency)}
-                  </div>
-                  <span className="text-[11px] text-slate-400 mt-1 block">
-                    Current: {formatCurrency(data.financials.totalCurrentValue, data.financials.currency)}
-                  </span>
-                </div>
-
-                <div
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-rose rounded-2xl p-5 bg-gradient-to-br from-rose-300/[0.08] to-transparent"
-                >
-                  <span className="text-xs text-rose-200/85">Unplayed Shame Value</span>
-                  <div className="text-2xl font-bold text-rose-300 mt-1">
-                    {formatCurrency(data.financials.unplayedValue, data.financials.currency)}
-                  </div>
-                  <span className="text-[11px] text-slate-400 mt-1 block">
-                    0 minutes on record
-                  </span>
-                </div>
-
-                <div
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-emerald rounded-2xl p-5 bg-gradient-to-br from-emerald-300/[0.08] to-transparent"
-                >
-                  <span className="text-xs text-emerald-200/85">Cost Per Hour</span>
-                  <div className="text-2xl font-bold text-emerald-300 mt-1">
-                    {formatCurrency(data.financials.costPerHour, data.financials.currency)}
-                    <span className="text-sm font-normal text-emerald-200/70">/hr</span>
-                  </div>
-                  <span className="text-[11px] text-slate-400 mt-1 block">
-                    ~{formatCurrency(data.financials.spendPerYear, data.financials.currency)}/yr avg
-                  </span>
-                </div>
-
-                <div
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-violet rounded-2xl p-5 bg-gradient-to-br from-violet-300/[0.08] to-transparent"
-                >
-                  <span className="text-xs text-violet-200/85">Most Played</span>
-                  <div className="text-base font-semibold text-slate-100 truncate mt-1.5">
-                    {data.stats.mostPlayed.name}
-                  </div>
-                  <span className="text-[11px] text-slate-400 mt-1.5 block">
-                    {data.stats.mostPlayed.hours.toLocaleString()} hours logged
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Backlog & Completion Analytics */}
-            <div>
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-3.5">
-                Backlog &amp; Time-to-Beat
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-violet rounded-2xl p-5"
-                >
-                  <span className="text-xs text-slate-400">Never Played</span>
-                  <div className="text-2xl font-bold text-slate-100 mt-1">
-                    {data.stats.neverPlayed}
-                  </div>
-                  <div className="w-full bg-slate-900/80 h-1.5 rounded-full mt-2.5 overflow-hidden border border-white/10">
-                    <div
-                      className="bg-gradient-to-r from-sky-300 to-violet-300 h-full rounded-full transition-all duration-700"
-                      style={{ width: `${data.stats.unplayedPercentage}%` }}
+        return (
+          <div className="w-full max-w-4xl space-y-6">
+            <div ref={cardRef} className="glossy-panel rounded-3xl p-6 sm:p-8 space-y-7">
+              {/* Profile Hero Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/12">
+                <div className="flex items-center gap-4">
+                  <div className="relative group">
+                    <img
+                      src={data.profile.avatar}
+                      alt={data.profile.name}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-2 ring-white/25 shadow-xl transition-transform duration-300 group-hover:scale-105"
                     />
+                    <span className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-lg bg-slate-900/90 border border-white/25 text-[10px] font-semibold text-sky-200 backdrop-blur-md">
+                      {data.profile.country}
+                    </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 mt-1.5 block">
-                    {data.stats.unplayedPercentage}% of library untouched
-                  </span>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-2xl font-bold text-slate-100">{data.profile.name}</h2>
+                      {data.profile.level > 0 && (
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-white/10 border border-white/20 text-slate-200">
+                          LVL {data.profile.level}
+                        </span>
+                      )}
+                      <span
+                        title={persona.desc}
+                        className={`text-[11px] px-3 py-0.5 rounded-full font-semibold border bg-gradient-to-r backdrop-blur-md cursor-help ${persona.style}`}
+                      >
+                        {persona.label}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1.5">
+                      {data.profile.memberSince && (
+                        <>
+                          Since <span className="text-slate-200 font-medium">{data.profile.memberSince}</span> ({data.profile.accountAgeYears}y) •{' '}
+                        </>
+                      )}
+                      <span className="text-slate-200 font-medium">
+                        {data.stats.totalGames.toLocaleString()} games
+                      </span>{' '}
+                      •{' '}
+                      <span className="text-sky-200 font-medium">
+                        {data.stats.totalHours.toLocaleString()}h played
+                      </span>
+                    </p>
+                    <p className="text-[11px] text-slate-400/90 mt-1 italic">{persona.desc}</p>
+                  </div>
                 </div>
 
-                <div
+                <button
+                  onClick={() => runSingleScan(data.profile.steamId, true)}
                   onMouseMove={handleCardMove}
-                  className="glossy-card glow-sky rounded-2xl p-5"
+                  disabled={loading}
+                  className="glossy-btn glossy-card glow-sky self-start sm:self-center px-3.5 py-2 rounded-xl text-xs font-medium text-slate-200 hover:text-white cursor-pointer"
                 >
-                  <span className="text-xs text-slate-400">Hours to Finish</span>
-                  <div className="text-2xl font-bold text-sky-200 mt-1">
-                    {data.backlogTime.hoursToFinish.toLocaleString()}h
-                  </div>
-                  <span className="text-[11px] text-slate-400 mt-1 block">
-                    {data.backlogTime.hoursToMaster.toLocaleString()}h to 100% master
-                  </span>
-                </div>
+                  {loading ? 'Refreshing...' : '↻ Rescan'}
+                </button>
+              </div>
 
-                <div
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-amber rounded-2xl p-5"
-                >
-                  <span className="text-xs text-slate-400">Est. Completion Time</span>
-                  <div className="text-2xl font-bold text-amber-200 mt-1">
-                    {data.backlogTime.years}y {data.backlogTime.months}mo
+              {/* Wallet Damage Highlight Cards */}
+              <div>
+                <h3 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-3.5">
+                  Wallet &amp; Value Analytics
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-sky rounded-2xl p-5"
+                  >
+                    <span className="text-xs text-slate-400">Est. Library Value</span>
+                    <div className="text-2xl font-bold text-slate-100 mt-1">
+                      {formatCurrency(data.financials.totalRetailValue, data.financials.currency)}
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">
+                      Current: {formatCurrency(data.financials.totalCurrentValue, data.financials.currency)}
+                    </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 mt-1 block">
-                    at {data.backlogTime.hoursPerTwoWeeks}h / 2 weeks pace
-                  </span>
-                </div>
 
-                <div
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-sky rounded-2xl p-5"
-                >
-                  <span className="text-xs text-slate-400">Zero Achievements</span>
-                  <div className="text-2xl font-bold text-slate-200 mt-1">
-                    {data.stats.noAchievements}
+                  <div
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-rose rounded-2xl p-5 bg-gradient-to-br from-rose-300/[0.08] to-transparent"
+                  >
+                    <span className="text-xs text-rose-200/85">Unplayed Shame Value</span>
+                    <div className="text-2xl font-bold text-rose-300 mt-1">
+                      {formatCurrency(data.financials.unplayedValue, data.financials.currency)}
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">
+                      0 minutes on record
+                    </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 mt-1 block">
-                    launched, 0 unlocked
-                  </span>
+
+                  <div
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-emerald rounded-2xl p-5 bg-gradient-to-br from-emerald-300/[0.08] to-transparent"
+                  >
+                    <span className="text-xs text-emerald-200/85">Avg. Game Price</span>
+                    <div className="text-2xl font-bold text-emerald-300 mt-1">
+                      {formatCurrency(avgGamePrice, data.financials.currency)}
+                      <span className="text-sm font-normal text-emerald-200/70">/game</span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">
+                      ~{formatCurrency(data.financials.spendPerYear, data.financials.currency)}/yr avg
+                    </span>
+                  </div>
+
+                  <div
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-violet rounded-2xl p-5 bg-gradient-to-br from-violet-300/[0.08] to-transparent"
+                  >
+                    <span className="text-xs text-violet-200/85">Most Played</span>
+                    <div className="text-base font-semibold text-slate-100 truncate mt-1.5">
+                      {data.stats.mostPlayed.name}
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1.5 block">
+                      {data.stats.mostPlayed.hours.toLocaleString()} hours logged
+                    </span>
+                  </div>
                 </div>
+              </div>
+
+              {/* Backlog & Completion Analytics */}
+              <div>
+                <h3 className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-3.5">
+                  Backlog &amp; Playtime Breakdown
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-violet rounded-2xl p-5"
+                  >
+                    <span className="text-xs text-slate-400">Never Played</span>
+                    <div className="text-2xl font-bold text-slate-100 mt-1">
+                      {data.stats.neverPlayed}
+                    </div>
+                    <div className="w-full bg-slate-900/80 h-1.5 rounded-full mt-2.5 overflow-hidden border border-white/10">
+                      <div
+                        className="bg-gradient-to-r from-sky-300 to-violet-300 h-full rounded-full transition-all duration-700"
+                        style={{ width: `${data.stats.unplayedPercentage}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1.5 block">
+                      {data.stats.unplayedPercentage}% of library untouched
+                    </span>
+                  </div>
+
+                  <div
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-emerald rounded-2xl p-5"
+                  >
+                    <span className="text-xs text-slate-400">Games Played</span>
+                    <div className="text-2xl font-bold text-emerald-200 mt-1">
+                      {playedGamesCount}
+                    </div>
+                    <div className="w-full bg-slate-900/80 h-1.5 rounded-full mt-2.5 overflow-hidden border border-white/10">
+                      <div
+                        className="bg-gradient-to-r from-emerald-300 to-teal-300 h-full rounded-full transition-all duration-700"
+                        style={{ width: `${playedPercentage}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1.5 block">
+                      {playedPercentage}% of library explored
+                    </span>
+                  </div>
+
+                  <div
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-sky rounded-2xl p-5"
+                  >
+                    <span className="text-xs text-slate-400">Hours to Finish</span>
+                    <div className="text-2xl font-bold text-sky-200 mt-1">
+                      {data.backlogTime.hoursToFinish.toLocaleString()}h
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">
+                      {data.backlogTime.hoursToMaster.toLocaleString()}h to 100% master
+                    </span>
+                  </div>
+
+                  <div
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-amber rounded-2xl p-5"
+                  >
+                    <span className="text-xs text-slate-400">Est. Completion Time</span>
+                    <div className="text-2xl font-bold text-amber-200 mt-1">
+                      {data.backlogTime.years}y {data.backlogTime.months}mo
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">
+                      at {data.backlogTime.hoursPerTwoWeeks}h / 2 weeks pace
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Glossy Highlight Pills */}
+              <div className="flex flex-wrap gap-2.5 pt-1">
+                {topGamePct > 0 && (
+                  <span
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-sky px-3.5 py-1.5 rounded-full text-xs text-sky-200"
+                  >
+                    👑 Top game share: <strong>{topGamePct}%</strong> of all playtime
+                  </span>
+                )}
+
+                <span
+                  onMouseMove={handleCardMove}
+                  className="glossy-card glow-emerald px-3.5 py-1.5 rounded-full text-xs text-emerald-200"
+                >
+                  🔥 Recent pace: <strong>{data.backlogTime.hoursPerTwoWeeks}h</strong> / 2 weeks
+                </span>
+
+                {data.wishlist && data.wishlist.count > 0 && (
+                  <span
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-amber px-3.5 py-1.5 rounded-full text-xs text-amber-200"
+                  >
+                    🛒 Wishlist: <strong>{data.wishlist.count} games</strong> (
+                    {formatCurrency(data.wishlist.totalValue, data.financials.currency)} pending)
+                  </span>
+                )}
+
+                {data.backlogTime.longestGame && (
+                  <span
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-violet px-3.5 py-1.5 rounded-full text-xs text-violet-200"
+                  >
+                    🏔️ Longest backlog: <strong>{data.backlogTime.longestGame.name}</strong> (
+                    {data.backlogTime.longestGame.hours}h)
+                  </span>
+                )}
+
+                {data.financials.worstImpulseBuy && (
+                  <span
+                    onMouseMove={handleCardMove}
+                    className="glossy-card glow-rose px-3.5 py-1.5 rounded-full text-xs text-rose-200"
+                  >
+                    💸 Worst impulse: <strong>{data.financials.worstImpulseBuy.name}</strong> (
+                    {formatCurrency(data.financials.worstImpulseBuy.price, data.financials.currency)} for{' '}
+                    {data.financials.worstImpulseBuy.minutes}m)
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Glossy Highlight Pills */}
-            <div className="flex flex-wrap gap-2.5 pt-1">
-              <span
-                onMouseMove={handleCardMove}
-                className="glossy-card glow-sky px-3.5 py-1.5 rounded-full text-xs text-sky-200"
-              >
-                ⚡ <strong>{data.backlogTime.quickWinsCount}</strong> quick wins (&le;8h)
-              </span>
+            {/* Hall of Fame vs Hall of Shame Top 5 Podium */}
+            {(data.hallOfFame?.length > 0 || data.hallOfShame?.length > 0) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Top 5 Most Played */}
+                <div className="glossy-panel rounded-3xl p-6 space-y-4">
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-sky-300">
+                      Hall of Fame
+                    </span>
+                    <h3 className="text-base font-bold text-slate-100">
+                      Top 5 Most Played Titles
+                    </h3>
+                  </div>
+                  <div className="space-y-2.5">
+                    {data.hallOfFame.map((game, index) => (
+                      <div
+                        key={game.appid}
+                        onMouseMove={handleCardMove}
+                        className="glossy-card glow-sky rounded-2xl p-2.5 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="w-6 text-center text-xs font-bold text-sky-300">
+                            #{index + 1}
+                          </span>
+                          <GameCover
+                            appid={game.appid}
+                            name={game.name}
+                            className="w-16 h-7 rounded-lg object-cover bg-slate-900 shrink-0"
+                          />
+                          <span className="text-xs font-semibold text-slate-100 truncate">
+                            {game.name}
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold text-sky-200 shrink-0 pr-1">
+                          {game.hours}h
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-              {data.wishlist && data.wishlist.count > 0 && (
-                <span
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-amber px-3.5 py-1.5 rounded-full text-xs text-amber-200"
-                >
-                  🛒 Wishlist: <strong>{data.wishlist.count} games</strong> (
-                  {formatCurrency(data.wishlist.totalValue, data.financials.currency)} pending)
-                </span>
-              )}
+                {/* Top 5 Expensive Unplayed */}
+                <div className="glossy-panel rounded-3xl p-6 space-y-4">
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-widest text-rose-300">
+                      Hall of Shame
+                    </span>
+                    <h3 className="text-base font-bold text-slate-100">
+                      Top 5 Priciest Unplayed Games
+                    </h3>
+                  </div>
+                  <div className="space-y-2.5">
+                    {data.hallOfShame.map((game, index) => (
+                      <div
+                        key={game.appid}
+                        onMouseMove={handleCardMove}
+                        className="glossy-card glow-rose rounded-2xl p-2.5 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="w-6 text-center text-xs font-bold text-rose-300">
+                            #{index + 1}
+                          </span>
+                          <GameCover
+                            appid={game.appid}
+                            name={game.name}
+                            className="w-16 h-7 rounded-lg object-cover bg-slate-900 shrink-0"
+                          />
+                          <span className="text-xs font-semibold text-slate-100 truncate">
+                            {game.name}
+                          </span>
+                        </div>
+                        <span className="text-xs font-bold text-rose-300 shrink-0 pr-1">
+                          {formatCurrency(game.price, data.financials.currency)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
-              {data.backlogTime.longestGame && (
-                <span
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-violet px-3.5 py-1.5 rounded-full text-xs text-violet-200"
-                >
-                  🏔️ Longest backlog: <strong>{data.backlogTime.longestGame.name}</strong> (
-                  {data.backlogTime.longestGame.hours}h)
-                </span>
-              )}
-
-              {data.financials.worstImpulseBuy && (
-                <span
-                  onMouseMove={handleCardMove}
-                  className="glossy-card glow-rose px-3.5 py-1.5 rounded-full text-xs text-rose-200"
-                >
-                  💸 Worst impulse: <strong>{data.financials.worstImpulseBuy.name}</strong> (
-                  {formatCurrency(data.financials.worstImpulseBuy.price, data.financials.currency)} for{' '}
-                  {data.financials.worstImpulseBuy.minutes}m)
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Hall of Fame vs Hall of Shame Top 5 Podium */}
-          {(data.hallOfFame?.length > 0 || data.hallOfShame?.length > 0) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Top 5 Most Played */}
-              <div className="glossy-panel rounded-3xl p-6 space-y-4">
+            {/* Interactive Backlog Roulette Card */}
+            {data.unplayedGames?.length > 0 && (
+              <div className="glossy-panel rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <span className="text-[11px] font-semibold uppercase tracking-widest text-sky-300">
-                    Hall of Fame
+                    Backlog Roulette
                   </span>
-                  <h3 className="text-base font-bold text-slate-100">
-                    Top 5 Most Played Titles
-                  </h3>
-                </div>
-                <div className="space-y-2.5">
-                  {data.hallOfFame.map((game, index) => (
-                    <div
-                      key={game.appid}
-                      onMouseMove={handleCardMove}
-                      className="glossy-card glow-sky rounded-2xl p-2.5 flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="w-6 text-center text-xs font-bold text-sky-300">
-                          #{index + 1}
+                  {rouletteGame ? (
+                    <div className="text-lg font-semibold text-slate-100 mt-0.5">
+                      🎯 Next up: <span className="text-sky-200">{rouletteGame.name}</span>{' '}
+                      {rouletteGame.hours ? (
+                        <span className="text-xs font-normal text-slate-400">
+                          (~{rouletteGame.hours}h to beat)
                         </span>
-                        <GameCover
-                          appid={game.appid}
-                          name={game.name}
-                          className="w-16 h-7 rounded-lg object-cover bg-slate-900 shrink-0"
-                        />
-                        <span className="text-xs font-semibold text-slate-100 truncate">
-                          {game.name}
-                        </span>
-                      </div>
-                      <span className="text-xs font-bold text-sky-200 shrink-0 pr-1">
-                        {game.hours}h
-                      </span>
+                      ) : null}
                     </div>
-                  ))}
+                  ) : (
+                    <p className="text-sm text-slate-300 mt-0.5">
+                      Can&apos;t decide? Spin a random game from your {data.unplayedGames.length}{' '}
+                      unplayed titles.
+                    </p>
+                  )}
                 </div>
-              </div>
 
-              {/* Top 5 Expensive Unplayed */}
-              <div className="glossy-panel rounded-3xl p-6 space-y-4">
+                <button
+                  onClick={spinRoulette}
+                  className="glossy-btn px-5 py-3 rounded-2xl bg-gradient-to-r from-sky-300 via-indigo-300 to-violet-300 border border-white/50 text-xs font-bold text-slate-950 shadow-lg shadow-indigo-500/20 shrink-0 cursor-pointer"
+                >
+                  🎲 Spin Random Game
+                </button>
+              </div>
+            )}
+
+            {/* Link to Dedicated Library Explorer Page */}
+            {data.library?.length > 0 && (
+              <div className="glossy-panel rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-rose-300">
-                    Hall of Shame
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-violet-300">
+                    Full Library Explorer
                   </span>
-                  <h3 className="text-base font-bold text-slate-100">
-                    Top 5 Priciest Unplayed Games
+                  <h3 className="text-base font-bold text-slate-100 mt-0.5">
+                    Browse &amp; Search All {data.library.length.toLocaleString()} Games
                   </h3>
-                </div>
-                <div className="space-y-2.5">
-                  {data.hallOfShame.map((game, index) => (
-                    <div
-                      key={game.appid}
-                      onMouseMove={handleCardMove}
-                      className="glossy-card glow-rose rounded-2xl p-2.5 flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="w-6 text-center text-xs font-bold text-rose-300">
-                          #{index + 1}
-                        </span>
-                        <GameCover
-                          appid={game.appid}
-                          name={game.name}
-                          className="w-16 h-7 rounded-lg object-cover bg-slate-900 shrink-0"
-                        />
-                        <span className="text-xs font-semibold text-slate-100 truncate">
-                          {game.name}
-                        </span>
-                      </div>
-                      <span className="text-xs font-bold text-rose-300 shrink-0 pr-1">
-                        {formatCurrency(game.price, data.financials.currency)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Interactive Backlog Roulette Card */}
-          {data.unplayedGames?.length > 0 && (
-            <div className="glossy-panel rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-sky-300">
-                  Backlog Roulette
-                </span>
-                {rouletteGame ? (
-                  <div className="text-lg font-semibold text-slate-100 mt-0.5">
-                    🎯 Next up: <span className="text-sky-200">{rouletteGame.name}</span>{' '}
-                    {rouletteGame.hours ? (
-                      <span className="text-xs font-normal text-slate-400">
-                        (~{rouletteGame.hours}h to beat)
-                      </span>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-300 mt-0.5">
-                    Can&apos;t decide? Spin a random game from your {data.unplayedGames.length}{' '}
-                    unplayed titles.
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Filter by unplayed, sort by price or hours, and launch titles on a dedicated page.
                   </p>
-                )}
+                </div>
 
-                {data.quickWinGames?.length > 0 && (
-                  <label className="inline-flex items-center gap-2 mt-2 text-xs text-slate-400 hover:text-slate-200 transition-colors cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={quickWinOnly}
-                      onChange={(e) => setQuickWinOnly(e.target.checked)}
-                      className="rounded accent-sky-300"
-                    />
-                    Only pick quick wins (&le;8h)
-                  </label>
-                )}
+                <a
+                  href={`/u/${encodeURIComponent(query || data.profile.steamId)}/library`}
+                  className="glossy-btn px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-300 via-indigo-300 to-sky-300 border border-white/50 text-xs font-bold text-slate-950 shadow-lg shadow-indigo-500/20 shrink-0"
+                >
+                  Open Library ({data.library.length.toLocaleString()}) →
+                </a>
               </div>
-
-              <button
-                onClick={spinRoulette}
-                className="glossy-btn px-5 py-3 rounded-2xl bg-gradient-to-r from-sky-300 via-indigo-300 to-violet-300 border border-white/50 text-xs font-bold text-slate-950 shadow-lg shadow-indigo-500/20 shrink-0 cursor-pointer"
-              >
-                🎲 Spin Random Game
-              </button>
-            </div>
-          )}
-
-          {/* Link to Dedicated Library Explorer Page */}
-          {data.library?.length > 0 && (
-            <div className="glossy-panel rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-violet-300">
-                  Full Library Explorer
-                </span>
-                <h3 className="text-base font-bold text-slate-100 mt-0.5">
-                  Browse &amp; Search All {data.library.length.toLocaleString()} Games
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Filter by unplayed, sort by price or hours, and launch titles on a dedicated page.
-                </p>
-              </div>
-
-              <a
-                href={`/u/${encodeURIComponent(query || data.profile.steamId)}/library`}
-                className="glossy-btn px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-300 via-indigo-300 to-sky-300 border border-white/50 text-xs font-bold text-slate-950 shadow-lg shadow-indigo-500/20 shrink-0"
-              >
-                Open Library ({data.library.length.toLocaleString()}) →
-              </a>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        );
+      })()}
 
       {/* 1v1 FRIEND BATTLE VIEW */}
       {data && data2 && (
@@ -834,31 +847,33 @@ export default function SteamVaultClient({ initialId }) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {[data, data2].map((player, idx) => (
-              <div
-                key={player.profile.steamId}
-                onMouseMove={handleCardMove}
-                className={`glossy-card ${
-                  idx === 0 ? 'glow-sky' : 'glow-violet'
-                } rounded-2xl p-4 flex items-center gap-3.5`}
-              >
-                <img
-                  src={player.profile.avatar}
-                  alt={player.profile.name}
-                  className="w-14 h-14 rounded-xl object-cover ring-1 ring-white/25"
-                />
-                <div className="min-w-0">
-                  <div className="font-bold text-slate-100 truncate">{player.profile.name}</div>
-                  <span
-                    className={`inline-block text-[10px] px-2.5 py-0.5 rounded-full font-semibold border mt-1 bg-gradient-to-r ${
-                      getPersona(player.stats).style
-                    }`}
-                  >
-                    {getPersona(player.stats).label}
-                  </span>
+            {[data, data2].map((player, idx) => {
+              const pBadge = getPersona(player.stats, player.financials);
+              return (
+                <div
+                  key={player.profile.steamId}
+                  onMouseMove={handleCardMove}
+                  className={`glossy-card ${
+                    idx === 0 ? 'glow-sky' : 'glow-violet'
+                  } rounded-2xl p-4 flex items-center gap-3.5`}
+                >
+                  <img
+                    src={player.profile.avatar}
+                    alt={player.profile.name}
+                    className="w-14 h-14 rounded-xl object-cover ring-1 ring-white/25"
+                  />
+                  <div className="min-w-0">
+                    <div className="font-bold text-slate-100 truncate">{player.profile.name}</div>
+                    <span
+                      title={pBadge.desc}
+                      className={`inline-block text-[10px] px-2.5 py-0.5 rounded-full font-semibold border mt-1 bg-gradient-to-r ${pBadge.style}`}
+                    >
+                      {pBadge.label}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="space-y-3">
@@ -889,13 +904,6 @@ export default function SteamVaultClient({ initialId }) {
                 v1: data.financials.unplayedValue,
                 v2: data2.financials.unplayedValue,
                 fmt: (v, p) => formatCurrency(v, p.financials.currency),
-                higherWins: false,
-              },
-              {
-                label: 'Cost Per Hour Efficiency',
-                v1: data.financials.costPerHour,
-                v2: data2.financials.costPerHour,
-                fmt: (v, p) => `${formatCurrency(v, p.financials.currency)}/hr`,
                 higherWins: false,
               },
               {
