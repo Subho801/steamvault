@@ -298,7 +298,7 @@ export default function SteamVaultClient({ initialId }) {
       )}
 
       {/* Top Brand Header */}
-      <div className="w-full max-w-4xl flex items-center justify-between mb-8">
+      <div className="w-full max-w-4xl flex flex-wrap items-center justify-between gap-4 mb-8">
         <button
           onClick={resetHome}
           className="flex items-center gap-3 text-left cursor-pointer group"
@@ -318,30 +318,50 @@ export default function SteamVaultClient({ initialId }) {
           </div>
         </button>
 
-        {data && (
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={resetHome}
-              onMouseMove={handleCardMove}
-              className="glossy-btn glossy-card glow-sky px-3.5 py-2 rounded-xl text-xs font-medium text-slate-200 hover:text-white cursor-pointer"
-            >
-              ← New Scan
-            </button>
-            <button
-              onClick={copyShareLink}
-              onMouseMove={handleCardMove}
-              className="glossy-btn glossy-card glow-sky px-3.5 py-2 rounded-xl text-xs font-medium text-sky-200 hover:text-white cursor-pointer"
-            >
-              {copied ? '✓ Copied!' : 'Share Link'}
-            </button>
-            <button
-              onClick={downloadImage}
-              className="glossy-btn px-4 py-2 rounded-xl bg-gradient-to-r from-sky-300 to-indigo-300 border border-white/50 text-xs font-semibold text-slate-950 shadow-lg shadow-sky-400/20 cursor-pointer"
-            >
-              Save Image
-            </button>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/battle"
+            className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            1v1 Battle
+          </a>
+          <a
+            href="/leaderboard"
+            className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            Leaderboard
+          </a>
+          <a
+            href="/badges"
+            className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            Badges
+          </a>
+          {data && (
+            <>
+              <button
+                onClick={resetHome}
+                onMouseMove={handleCardMove}
+                className="glossy-btn glossy-card glow-sky px-3.5 py-2 rounded-xl text-xs font-medium text-slate-200 hover:text-white cursor-pointer"
+              >
+                ← New Scan
+              </button>
+              <button
+                onClick={copyShareLink}
+                onMouseMove={handleCardMove}
+                className="glossy-btn glossy-card glow-sky px-3.5 py-2 rounded-xl text-xs font-medium text-sky-200 hover:text-white cursor-pointer"
+              >
+                {copied ? '✓ Copied!' : 'Share Link'}
+              </button>
+              <button
+                onClick={downloadImage}
+                className="glossy-btn px-4 py-2 rounded-xl bg-gradient-to-r from-sky-300 to-indigo-300 border border-white/50 text-xs font-semibold text-slate-950 shadow-lg shadow-sky-400/20 cursor-pointer"
+              >
+                Save Image
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Landing Search Box */}
