@@ -292,8 +292,11 @@ export async function GET(request) {
 
     const countryCode = player.loccountrycode || 'IN';
     const appIds = games.map((g) => g.appid);
-    const prices = await fetchPrices(appIds, countryCode);
-    const wishlist = await fetchWishlistStats(steamId, countryCode);
+    const [prices, wishlist, background] = await Promise.all([
+      fetchPrices(appIds, countryCode),
+      fetchWishlistStats(steamId, countryCode),
+      fetchSteamBackground(steamId),
+    ]);
 
     let totalMinutes = 0;
     let twoWeeksMinutes = 0;
@@ -439,7 +442,7 @@ export async function GET(request) {
         ? Math.round(totalRetailValue / accountAgeYears)
         : Math.round(totalRetailValue);
 
-    return NextResponse.json({
+    const finalPayload = {
       profile: {
         steamId: player.steamid,
         name: player.personaname,
@@ -448,6 +451,7 @@ export async function GET(request) {
         level: steamLevel,
         memberSince,
         accountAgeYears,
+        background,
       },
       stats: {
         totalGames: games.length,
@@ -482,8 +486,10 @@ export async function GET(request) {
       hallOfFame,
       hallOfShame,
       library,
-    });
+    };
+
     await redisSet(cacheKey, finalPayload, 86400);
+    return NextResponse.json(finalPayload);
   } catch (error) {
     return NextResponse.json({ error: error.message || 'Failed to generate receipt' }, { status: 500 });
   }
