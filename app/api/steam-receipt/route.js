@@ -216,6 +216,39 @@ async function fetchWishlistStats(steamId, countryCode = 'IN') {
   }
 }
 
+async function fetchSteamBackground(steamId) {
+  try {
+    const res = await fetch(`https://steamcommunity.com/profiles/${steamId}/`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // 1. Check for animated video background (.webm or .mp4)
+    const videoMatch = html.match(
+      /<div class="profile_animated_background">[\s\S]*?<source src="([^"]+\.(?:webm|mp4))"/i
+    );
+    if (videoMatch) {
+      return { type: 'video', url: videoMatch[1] };
+    }
+
+    // 2. Check for static background image URL in inline CSS
+    const imgMatch = html.match(
+      /has_profile_background[\s\S]*?background-image:\s*url\(\s*['"]?([^'")]+)['"]?\s*\)/i
+    );
+    if (imgMatch) {
+      return { type: 'image', url: imgMatch[1] };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('id');
