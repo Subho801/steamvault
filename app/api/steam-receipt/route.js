@@ -57,6 +57,16 @@ function saveJson(filePath, data) {
   }
 }
 
+async function updateLeaderboard(entry) {
+  if (!KV_URL || !KV_TOKEN) return;
+  try {
+    const existing = (await redisGet('steamvault:leaderboard')) || [];
+    const filtered = existing.filter((item) => item.steamId !== entry.steamId);
+    const updated = [entry, ...filtered].slice(0, 100);
+    await redisSet('steamvault:leaderboard', updated, 60 * 60 * 24 * 30); // 30 days
+  } catch {}
+}
+
 async function resolveSteamId(input) {
   if (/^\d{17}$/.test(input)) return input;
 
@@ -253,6 +263,10 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('id');
   const forceRefresh = searchParams.get('refresh') === '1';
+  if (searchParams.get('leaderboard') === '1') {
+    const list = (await redisGet('steamvault:leaderboard')) || [];
+    return NextResponse.json({ leaderboard: list });
+  }
 
   if (!query) {
     return NextResponse.json({ error: 'Missing Steam ID or username' }, { status: 400 });
@@ -489,6 +503,22 @@ export async function GET(request) {
     };
 
     await redisSet(cacheKey, finalPayload, 86400);
+    await updateLeaderboard({
+      steamId: player.steamid,
+      name: player.personaname,
+      avatar: player.avatarfull,
+      country: countryCode,
+      level: steamLevel,
+      totalGames: games.length,
+      totalHours,
+      neverPlayed: neverPlayedCount,
+      unplayedPercentage,
+      totalRetailValue: Math.round(totalRetailValue),
+      unplayedValue: Math.round(unplayedValue),
+      currency,
+      mostPlayedName: mostPlayed.name,
+      scannedAt: Date.now(),
+    });
     return NextResponse.json(finalPayload);
   } catch (error) {
     return NextResponse.json({ error: error.message || 'Failed to generate receipt' }, { status: 500 });
