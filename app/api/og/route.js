@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { connection } from 'next/server';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
