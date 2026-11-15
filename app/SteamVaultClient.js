@@ -51,10 +51,6 @@ export default function SteamVaultClient({ initialId }) {
 
   const [rouletteGame, setRouletteGame] = useState(null);
   const [quickWinOnly, setQuickWinOnly] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [libraryFilter, setLibraryFilter] = useState('all');
-  const [librarySort, setLibrarySort] = useState('hours-desc');
-  const [visibleCount, setVisibleCount] = useState(24);
 
   const cardRef = useRef(null);
 
@@ -68,11 +64,11 @@ export default function SteamVaultClient({ initialId }) {
 
   useEffect(() => {
     if (initialId) {
-    setMode('single');
-    setQuery(initialId);
-    runSingleScan(initialId);
-    return;
-  }
+      setMode('single');
+      setQuery(initialId);
+      runSingleScan(initialId);
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
     const idParam = params.get('id');
     const p1 = params.get('p1');
@@ -743,6 +739,8 @@ export default function SteamVaultClient({ initialId }) {
               </a>
             </div>
           )}
+        </div>
+      )}
 
       {/* 1v1 FRIEND BATTLE VIEW */}
       {data && data2 && (
